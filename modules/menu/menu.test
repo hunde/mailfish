@@ -276,20 +276,6 @@ class MenuTestCase extends DrupalWebTestCase {
   }
 
   /**
-   * Add a menu link with a scheme-relative url.
-   */
-  function testMenuSchemeRelative() {
-    $this->drupalLogin($this->big_user);
-
-    // Make a path with query and fragment on.
-    $path = '//drupal.org';
-    $item = $this->addMenuLink(0, $path);
-
-    $this->drupalGet('admin/structure/menu/item/' . $item['mlid'] . '/edit');
-    $this->assertFieldByName('link_path', $path, 'Path is found with scheme-relative URL.');
-  }
-
-  /**
    * Add a menu link using the menu module UI.
    *
    * @param integer $plid Parent menu link id.
@@ -525,6 +511,23 @@ class MenuTestCase extends DrupalWebTestCase {
     foreach ($expected_item as $key => $value) {
       $this->assertEqual($item[$key], $value, format_string('Parameter %key had expected value.', array('%key' => $key)));
     }
+  }
+
+  /**
+   * Test administrative users other than user 1 can access the menu parents AJAX callback.
+   */
+  public function testMenuParentsJsAccess() {
+    $admin = $this->drupalCreateUser(array('administer menu'));
+    $this->drupalLogin($admin);
+    // Just check access to the callback overall, the POST data is irrelevant.
+    $this->drupalGetAJAX('admin/structure/menu/parents');
+    $this->assertResponse(200);
+
+    // Do standard user tests.
+    // Login the user.
+    $this->drupalLogin($this->std_user);
+    $this->drupalGetAJAX('admin/structure/menu/parents');
+    $this->assertResponse(403);
   }
 
   /**

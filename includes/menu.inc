@@ -2494,8 +2494,8 @@ function menu_link_get_preferred($path = NULL, $selected_menu = NULL) {
     // Weight must be taken from {menu_links}, not {menu_router}.
     $query->addField('ml', 'weight', 'link_weight');
     $query->fields('m');
-    $query->orderBy('ml.customized', 'DESC');
     $query->condition('ml.link_path', $path_candidates, 'IN');
+    $query->addTag('preferred_menu_links');
 
     // Sort candidates by link path and menu name.
     $candidates = array();
