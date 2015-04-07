@@ -1,0 +1,100 @@
+<?php
+
+/**
+ * @file
+ * Defines and manages the MailFish schema.
+ */
+
+ /**
+  * Implements hook_schema()
+  */
+  function mailfish_schema() {
+    $schema['mailfish'] = array(
+      'description' => 'Stores the timestamp, entity type, entity id, and user id if any for each mailfish subscription.',
+      'fields' => array(
+        'id' => array(
+          'description' => 'The preliminary identifier for the entry.',
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not_null' => TRUE,
+        ),
+        'uid' => array(
+          'description' => 'The primary identifier for the entry.',
+          'type' => 'int',
+          'not_null' => TRUE,
+          'default' => 0,
+        ),
+        'entity_type' => array(
+          'description' => 'The entity type that this subscription was added on.',
+          'type' => 'varchar',
+          'length' => 30,
+          'not null' => TRUE,
+          'default' => '',
+        ),
+        'entity_id' => array(
+          'description' => 'The entity id that this subscription was added on.',
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+        ),
+        'created' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'Timestamp for when subscription was created.',
+        ),
+      ),
+      'primary key' => array('id'),
+      'indexes' => array(
+        'uid' => array('uid'),
+      ),
+    );
+    return $schema;
+  }
+
+  /**
+   * Implements hook_install().
+   */
+   function mailfish_install() {
+     //Add an email field to Mailfish subscriptions.
+     //Create field here to ensure it always exists on install.
+     $field = field_info_field('mailfish email');
+     $instance = field_info_instance('mailfish', 'mailfish_email', 'mailfish');
+     if (empty($field)) {
+       $field = array(
+         'field_name' => 'mailfish_email',
+         'type' => 'email',
+         'entity_types' => array('mailfish'),
+       );
+       $field = field_create_filed($field);
+     }
+     if (empty($instance)) {
+       $instance = array(
+         'field_name' => 'mailfish_email',
+         'entity_type' => 'mailfish',
+         'bundle' => 'mailfish',
+         'label' => 'Email Address',
+         'description' => 'Join our mailing list',
+         'locked' => TRUE,
+         'default_value_function' => 'mailfish_default_email'
+         'widget' => array('type' => 'email_textfield'),
+         'display' => array(
+           'default' => array(
+             'label' => 'hidden',
+            ),
+          ),
+        );
+       $instance = field_create_instance($instance);
+     }
+     return $instance;
+   }
+
+   /**
+    * Implements hook_uninstall().
+    */
+    function mailfish_uninstall() {
+      variable_del('mailfish_message');
+      field_delete_field('mailfish_email');
+    }
+
+

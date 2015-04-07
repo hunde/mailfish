@@ -1,0 +1,145 @@
+<?php
+
+/**
+ * @file
+ * Collect email addresses from a form within an entity or pane
+ */
+
+/**
+ * Implements hook_menu()
+ */
+function mailfish_menu() {
+  $items['admin/config/content/mailfish'] = array(
+    'title' => 'MailFish Settings',
+    'description' => 'Administer MailFish Settings',
+    'page callback' => 'drupal_get_form', # A Drupal API function
+    'page arguments' => array('mailfish_admin_settings_form'), #This fucntion will be implemented in mailfish.admin.inc. And will be a parameter for drupal_get_form
+    'access arguments' => array('manage mailfish settings'),
+    'file' => 'mailfish.admin.inc'
+  );
+
+  $items['admin/config/content/mailfish/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_DEFAULT_LOCAL_TASK, # This sets the menu item to the default setting, usually 'active'
+    'weight' => -10,
+ );
+ return $items;
+}
+
+/**
+ * Provde the form to subscribe to MailFish.
+ */
+function mailfish_email_form($form, &$form_state) {
+  $mailfish = new stdClass();
+  $form['#mailfish'] = $mailfish; #By using the '#' you can add things to the form array which won't be treated as form elements but are passed                                                                through validation and submission
+  field_attach_form('mailfish', $mailfish, $form, &$form_state);
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Sign Up'),
+    '#weight' => 40,
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_permission()
+ */
+function mailfish_permission() {
+  $perm = array(
+    'view mailfish subscriptions' => array(
+      'title' => t('View MailFish subscriptions'),
+    ),
+    'create mailfish subscriptions' => array(
+      'title' => t('Create MailFish subscriptions'),
+    ),
+    'manage mailfish settings' => array(
+      'title' => t('Manage MailFish settings'),
+    ),
+  );
+  return $perm;
+}
+
+/**
+ * Implements hook_form_alter()
+ *
+ * Shows the form_id of each form using devel.
+ */
+function mailfish_form_alter(&$form, $form_state, $form_id) {
+   if (module_exists('devel')) {
+     dpm($form_id);
+   }
+   else {
+     print $form_id;
+   }
+}
+
+/**
+ * Implements hook_form_system_site_information_settings_alter()
+ *
+ * Adds a copy of the MailFish settings form to the Site Information form.
+ * For demo purposes.
+ */
+function mailfish_form_system_site_information_settings_alter(&$form, $form_state) {
+  $form['mailfish_message'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Message to display after a user signs up.'),
+    '#default_value' => variable_get('mailfish_message', t('Thank you for signing up to the mailing list.')),
+  );
+}
+
+/**
+ * Implments hook_entity_info().
+ */
+function mailfish_entity_info() {
+  $return = array(
+    'mailfish' => array(
+      'label' => t('Mailfish Subscriptions'),
+      'base table' => 'mailfish',
+      'fieldable' => TRUE,
+      'entity keys' => array(
+        'id' => 'id',
+      ),
+      'bundles' => array(
+        'mailfish' => array(
+          'label' => t('Mailfish'),
+          'admin' => array(
+            'path' => 'admin/config/content/mailfish',
+            'access arguments' => array('manage mailfish settings'),
+          ),
+        ),
+      ),
+      'view modes' => array(
+        'full' => array(
+          'label' => t('Full Mailfish subscription'),
+          'custom settings' => FALSE,
+        ),
+      ),
+    ),
+  );
+  return $return;
+}
+
+
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ *
+ * Tells CTools (and thus Panels) where to look for plugin code.
+ */
+function mailfish_ctools_plugin_directory($module, $plugin) {
+  if (($module == 'ctools' || $module == 'panels') && ($plugin == 'content_types')) {
+    return 'plugins/' . $plugin;
+  }
+}
+
+/**
+ * Implements ctools_plugin_api().
+ */
+function mailfish_ctools_plugin_api() {
+  $args = func_get_args();
+  $module = array_shift($args);
+  $api = array_shift($args);
+  if ($module == 'page_manager' && $api == 'pages_default') {
+    return array('version' => 1);
+  }
+}
