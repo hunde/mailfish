@@ -66,7 +66,7 @@
          'type' => 'email',
          'entity_types' => array('mailfish'),
        );
-       $field = field_create_filed($field);
+       $field = field_create_field($field);
      }
      if (empty($instance)) {
        $instance = array(
@@ -76,7 +76,7 @@
          'label' => 'Email Address',
          'description' => 'Join our mailing list',
          'locked' => TRUE,
-         'default_value_function' => 'mailfish_default_email'
+         'default_value_function' => 'mailfish_default_email',
          'widget' => array('type' => 'email_textfield'),
          'display' => array(
            'default' => array(

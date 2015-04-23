@@ -119,6 +119,60 @@ function mailfish_entity_info() {
   return $return;
 }
 
+/**
+ * Submission handler for mailfish_email_form.
+ */
+function mailfish_email_form_submit($form, &$form_state) {
+  $mailfish = $form['#mailfish'];
+  entity_form_submit_build_entity('mailfish', $mailfish, $form, $form_state);
+
+  //Save signup data.
+  mailfish_save($mailfish);
+
+  //Provide the user with a translated confirmation message.
+  $message = variable_get('mailfish_message', t('Thank you for signing up to the mailing list.'));
+  drupal_set_message($message);
+}
+
+/**
+ * Save changes to a mailfish subscription or adds a new mailfish subscription.
+ *
+ * @param $subscription
+ *  The subscription object to modify or add. If subscription->id is omitted,
+ *  a new subscription will be added.
+ */
+ function mailfish_save($subscription) {
+   global $user;
+
+   //Allow presave field api work.
+   field_attach_presave('mailfish', $subscription);
+
+   //Allow modules to alter tge nailfish subscription before saving.
+   module_invoke_all('entity_presave', $subscription, 'mailfish');
+
+   if (empty($subscription->id)) {
+     //Set default value.
+     $defaults = array(
+       'uid' => $user->id,
+       'created' => REQUEST_TIME,
+     );
+     foreach ($defaults as $key => $default) {
+       if (!isset($subscription->$key)) {
+         $subscription->$key = $default;
+       }
+     }
+
+     $status = drupal_write_record('mailfish', $subscription);
+     field_attach_insert('mailfish', $subscription);
+     module_invoke_all('entity_insert', $subscription, 'mailfish');
+   }
+   else {
+     $status = drupal_write_record('mailfish', $subscription, 'id');
+     field_attach_update('mailfish', $subscription);
+     module_invoke_all('entity_update', $subscription, 'mailfish');
+   }
+   return $status;
+ }
 
 
 /**
